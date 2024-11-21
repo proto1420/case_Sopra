@@ -47,7 +47,7 @@ ui <- fluidPage(
     ),
     mainPanel(
       plotlyOutput("sentimentPlot"),
-      verbatimTextOutput("resultText")
+      tableOutput("resultTable")
     )
   )
 )
@@ -88,6 +88,7 @@ server <- function(input, output) {
     # Create the bar plot
     ggplotly(ggplot(results_df, aes(x = Algorithm, y = Score, fill = Algorithm)) +
       geom_bar(stat = "identity") +
+      geom_hline(yintercept = c(0, 0.05), linetype = "dotted") +
       ylim(-1, 1) +
       labs(
         title = "Sentiment Scores from Different Algorithms",
@@ -98,16 +99,18 @@ server <- function(input, output) {
   })
 
   # Render the result text
-  output$resultText <- renderPrint({
+  output$resultTable <- renderTable({
     req(sentimentResults$huggingface,
         sentimentResults$vader,
         sentimentResults$textblob)
 
-    list(
-      HuggingFace = sentimentResults$huggingface,
-      VADER = sentimentResults$vader,
-      TextBlob = sentimentResults$textblob
-    )
+    data.frame(Algorithm = c("huggingface", "vader", "textblob"),
+           Score = c(sentimentResults$huggingface$score,
+                     sentimentResults$vader$score,
+                     sentimentResults$textblob$score),
+           Label = c(sentimentResults$huggingface$label,
+                     sentimentResults$vader$label,
+                     sentimentResults$textblob$label))
   })
 }
 

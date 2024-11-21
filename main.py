@@ -35,41 +35,29 @@ huggingface_model = pipeline("sentiment-analysis", model="distilbert-base-uncase
 vader_analyzer = SentimentIntensityAnalyzer()
 
 # Model functions
-# def huggingface_sentiment(text):
-#     """Classify sentiment using a Hugging Face model."""
-#     result = huggingface_model(text[:512])[0]  # Truncate to model's max length
-#     sentiment = "positive" if result['label'] == "POSITIVE" else "negative"
-#     return sentiment, result['score']
-# 
-# def vader_sentiment(text):
-#     """Classify sentiment using VADER."""
-#     scores = vader_analyzer.polarity_scores(text)
-#     sentiment = "positive" if scores['compound'] >= 0.05 else "negative"
-#     return sentiment, scores['compound']
-# 
-# def textblob_sentiment(text):
-#     """Classify sentiment using TextBlob."""
-#     analysis = TextBlob(text)
-#     sentiment = "positive" if analysis.sentiment.polarity > 0 else "negative"
-#     return sentiment, analysis.sentiment.polarity
-#   
-  
 def huggingface_sentiment(text):
-    result = huggingface_model(text[:512])[0]
-    return "positive" if result['label'] == "POSITIVE" else "negative"
+    """Classify sentiment using a Hugging Face model."""
+    result = huggingface_model(text[:512])[0]  # Truncate to model's max length
+    sentiment = "positive" if result['label'] == "POSITIVE" else "negative"
+    return sentiment, result['score']
 
 def vader_sentiment(text):
+    """Classify sentiment using VADER."""
     scores = vader_analyzer.polarity_scores(text)
-    return "positive" if scores['compound'] >= 0.05 else "negative"
+    sentiment = "positive" if scores['compound'] >= 0.05 else "negative"
+    return sentiment, scores['compound']
 
 def textblob_sentiment(text):
+    """Classify sentiment using TextBlob."""
     analysis = TextBlob(text)
-    return "positive" if analysis.sentiment.polarity > 0 else "negative"
+    sentiment = "positive" if analysis.sentiment.polarity > 0 else "negative"
+    return sentiment, analysis.sentiment.polarity
+
 
 # Benchmarking function
 def benchmark_model(model_name, sentiment_function, reviews, labels):
     start_time = time.time()
-    predictions = [sentiment_function(review) for review in reviews]
+    predictions = [sentiment_function(review)[0] for review in reviews]
     execution_time = time.time() - start_time
     accuracy = accuracy_score(labels, predictions)
     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average="binary", pos_label="positive")
@@ -83,39 +71,39 @@ def benchmark_model(model_name, sentiment_function, reviews, labels):
     }
     
 
-# # Apply all models and benchmark
-# results = []
-# for review in df['review']:  # Ensure 'review' column exists in the dataset
-#     try:
-#         hf_sentiment, hf_score = huggingface_sentiment(review)
-#         vader_sentiment_label, vader_score = vader_sentiment(review)
-#         tb_sentiment, tb_score = textblob_sentiment(review)
-#         results.append({
-#             "review": review,
-#             "hf_sentiment": hf_sentiment,
-#             "hf_score": hf_score,
-#             "vader_sentiment": vader_sentiment_label,
-#             "vader_score": vader_score,
-#             "textblob_sentiment": tb_sentiment,
-#             "textblob_score": tb_score,
-#         })
-#     except Exception as e:
-#         # Handle potential issues with specific rows
-#         results.append({
-#             "review": review,
-#             "hf_sentiment": None,
-#             "hf_score": None,
-#             "vader_sentiment": None,
-#             "vader_score": None,
-#             "textblob_sentiment": None,
-#             "textblob_score": None,
-#             "error": str(e),
-#         })
-# 
-# # Save results to a CSV file
-# results_df = pd.DataFrame(results)
-# output_path = "C:/Users/APissoort/Documents/SopraSteria/Assessment/output/sentiment_results.csv"
-# results_df.to_csv(output_path, index=False)
+# Apply all models
+results = []
+for review in df['review']:  # Ensure 'review' column exists in the dataset
+    try:
+        hf_sentiment, hf_score = huggingface_sentiment(review)
+        vader_sentiment_label, vader_score = vader_sentiment(review)
+        tb_sentiment, tb_score = textblob_sentiment(review)
+        results.append({
+            "review": review,
+            "hf_sentiment": hf_sentiment,
+            "hf_score": hf_score,
+            "vader_sentiment": vader_sentiment_label,
+            "vader_score": vader_score,
+            "textblob_sentiment": tb_sentiment,
+            "textblob_score": tb_score,
+        })
+    except Exception as e:
+        # Handle potential issues with specific rows
+        results.append({
+            "review": review,
+            "hf_sentiment": None,
+            "hf_score": None,
+            "vader_sentiment": None,
+            "vader_score": None,
+            "textblob_sentiment": None,
+            "textblob_score": None,
+            "error": str(e),
+        })
+
+# Save results to a CSV file
+results_df = pd.DataFrame(results)
+output_path = "C:/Users/APissoort/Documents/SopraSteria/Assessment/output/sentiment_results.csv"
+results_df.to_csv(output_path, index=False)
 
 
 # Benchmark all models
@@ -131,11 +119,5 @@ results.append(benchmark_model("TextBlob", textblob_sentiment, reviews, labels))
 benchmark_df = pd.DataFrame(results)
 
 # Save results to a CSV file
-output_path = "C:/Users/APissoort/Documents/SopraSteria/Assessment/output/sentiment_results.csv"
+output_path = "C:/Users/APissoort/Documents/SopraSteria/Assessment/output/benchmark_results.csv"
 benchmark_df.to_csv(output_path, index=False)
-
-# Display results
-benchmark_df
-
-
-print(f"Results saved to {output_path}")
